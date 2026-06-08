@@ -1,0 +1,59 @@
+import typer
+import os
+from dotenv import load_dotenv
+from typing import Optional
+from openai import OpenAI
+from tqdm import tqdm  # type: ignore
+
+from extractor import extract_sections
+from llm_generator import generate_flashcards
+from anki_builder import build_anki_deck
+
+load_dotenv()
+
+app = typer.Typer()
+
+@app.command()
+def create_deck(
+    pdf_path: str = typer.Argument(..., help="Path to the textbook PDF"),
+    deck_name: str = typer.Option("Textbook Deck", "--deck-name", "-d", help="Root name for the Anki deck"),
+    output_path: str = typer.Option("output.apkg", "--output", "-o", help="Output path for the .apkg file"),
+    model_name: str = typer.Option("gpt-4o", "--model", "-m", help="Name of the LLM model to use"),
+    base_url: Optional[str] = typer.Option(None, "--base-url", "-b", help="Base URL for the LLM API (e.g., http://localhost:11434/v1 for Ollama)"),
+    api_key: Optional[str] = typer.Option(None, "--api-key", "-k", help="API Key for the LLM. If not provided, will look for OPENAI_API_KEY environment variable.")
+):
+    """
+    Extracts text from a PDF textbook, generates Anki flashcards using an LLM, and builds an Anki deck.
+    """
+    client_api_key = api_key or os.getenv("OPENAI_API_KEY", "ollama")
+    
+    client = OpenAI(
+        api_key=client_api_key,
+        base_url=base_url
+    )
+    
+    typer.echo(f"Reading and chunking PDF: {pdf_path}...")
+    try:
+        sections = extract_sections(pdf_path, client, model_name)
+    except Exception as e:
+        typer.secho(f"Failed to read PDF: {e}", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+        
+    typer.echo(f"Extracted {len(sections)} sections.")
+    
+    typer.echo(f"Generating flashcards using model '{model_name}'...")
+    processed_sections = []
+    for section in tqdm(sections, desc="Processing sections"):
+        processed_section = generate_flashcards(section, client, model_name)
+        processed_sections.append(processed_section)
+        
+    typer.echo(f"Building Anki deck '{deck_name}'...")
+    success = build_anki_deck(tuple(processed_sections), deck_name, output_path)
+    
+    if success:
+        typer.secho("Done! Deck successfully created.", fg=typer.colors.GREEN)
+    else:
+        typer.secho("No flashcards were generated.", fg=typer.colors.YELLOW)
+
+if __name__ == "__main__":
+    app()
