@@ -1,8 +1,11 @@
 import fitz  # type: ignore
 import json
+import logging
 from typing import Tuple, List, Optional, Any
 from openai import OpenAI
 from models import Section, TocList
+
+logger = logging.getLogger(__name__)
 
 def extract_toc_with_llm(doc: fitz.Document, client: OpenAI, model_name: str) -> List[List[Any]]:
     """
@@ -53,7 +56,7 @@ Output your response strictly in JSON format matching the following schema:
         # Convert to PyMuPDF toc format: [level, title, page_number]
         return [[item.level, item.title, item.page_number] for item in toc_list.items]
     except Exception as e:
-        print(f"Error extracting TOC with LLM: {e}")
+        logger.error(f"Error extracting TOC with LLM: {e}")
         return []
 
 def extract_sections(pdf_path: str, client: Optional[OpenAI] = None, model_name: Optional[str] = None) -> Tuple[Section, ...]:
@@ -61,14 +64,26 @@ def extract_sections(pdf_path: str, client: Optional[OpenAI] = None, model_name:
     Extracts hierarchical sections from a PDF based on its Table of Contents.
     Returns a tuple of immutable Section objects.
     """
+    logger.info(f"Opening PDF document: {pdf_path}")
     doc = fitz.open(pdf_path)
     toc = doc.get_toc()
     
+    if toc:
+        logger.info(f"Found Table of Contents in document metadata with {len(toc)} items.")
+    
     if not toc and client and model_name:
-        print("No Table of Contents found in metadata. Extracting from first 30 pages using LLM...")
+        logger.info("No Table of Contents found in metadata. Extracting from first 30 pages using LLM...")
         toc = extract_toc_with_llm(doc, client, model_name)
+        
+    if toc:
+        logger.info("Table of Contents:")
+        for item in toc:
+            level, title, page_num = item[:3]
+            indent = "  " * max(0, int(level) - 1)
+            logger.info(f"{indent}- {title} (Page {page_num})")
     
     if not toc:
+        logger.warning("No Table of Contents found. Falling back to extracting entire document content as one section.")
         content = "".join(page.get_text() for page in doc)
         return (Section(title="Full Text", hierarchy=("Document",), content=content.strip()),)
         
@@ -111,4 +126,5 @@ def extract_sections(pdf_path: str, client: Optional[OpenAI] = None, model_name:
                 content=content
             ))
             
+    logger.info(f"Extracted {len(sections)} sections from {pdf_path}")
     return tuple(sections)
