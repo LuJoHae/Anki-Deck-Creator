@@ -10,8 +10,8 @@ def extract_toc_with_llm(doc: fitz.Document, client: OpenAI, model_name: str) ->
     Returns a list of [level, title, page_number] matching PyMuPDF's get_toc() format.
     """
     content_parts = []
-    # Grab the first 20 pages
-    for p in range(min(20, doc.page_count)):
+    # Grab the first 30 pages
+    for p in range(min(30, doc.page_count)):
         page = doc.load_page(p)
         content_parts.append(page.get_text())
     
@@ -65,7 +65,7 @@ def extract_sections(pdf_path: str, client: Optional[OpenAI] = None, model_name:
     toc = doc.get_toc()
     
     if not toc and client and model_name:
-        print("No Table of Contents found in metadata. Extracting from first 20 pages using LLM...")
+        print("No Table of Contents found in metadata. Extracting from first 30 pages using LLM...")
         toc = extract_toc_with_llm(doc, client, model_name)
     
     if not toc:
