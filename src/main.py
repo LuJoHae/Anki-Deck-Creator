@@ -15,7 +15,7 @@ load_dotenv()
 
 # Configure logging
 logging.basicConfig(
-    filename='anki_creator.log',
+    filename='./logs/anki_creator.log',
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
