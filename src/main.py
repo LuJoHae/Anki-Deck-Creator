@@ -1,5 +1,6 @@
 import typer
 import os
+import sys
 import logging
 from dotenv import load_dotenv
 from typing import Optional
@@ -57,7 +58,7 @@ def create_deck(
     typer.echo(f"Generating flashcards using model '{model_name}' (Density: {density})...")
     processed_sections = []
     
-    pbar = tqdm(sections, desc="Processing sections")
+    pbar = tqdm(sections, desc="Processing sections", file=sys.stdout)
     for section in pbar:
         # Update progress bar text with current section
         pbar.set_postfix({"section": section.title[:20]})
