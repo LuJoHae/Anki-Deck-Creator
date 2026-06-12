@@ -6,27 +6,16 @@ A powerful Python tool designed to automatically generate structured Anki flashc
 
 - **Hierarchical Subdecks**: Automatically reads your PDF's Table of Contents to organize flashcards into nested subdecks (e.g., `Biology 101::Chapter 1::Section 1.1`).
 - **Smart TOC Fallback**: If your PDF lacks metadata for a built-in Table of Contents, the tool automatically reads the first 20 pages and asks the LLM to dynamically generate the structure!
-- **Strict LaTeX Math Support**: Automatically preserves math formulas and equations using Anki's native MathJax (`\\(` and `\\[`) syntax.
+- **LaTeX Math Support**: Automatically preserves math formulas and equations using Anki's native MathJax (`\\(` and `\\[`) syntax.
 - **Adjustable Question Density**: Use `--density` to configure whether you want just a few high-level summary questions or granular flashcards covering every specific detail.
 - **Local & Cloud LLMs**: Works identically with OpenAI's `gpt-4o` or local offline models like `llama3` via Ollama.
-- **Type-Safe & Fast**: Built using a strict functional programming paradigm, fully tested, and utilizes `uv` for blazing-fast dependency management.
-
----
-
-## Installation
-
-This project utilizes [uv](https://docs.astral.sh/uv/) for dependency management. If you don't have it installed, follow their installation guide.
-
-1. Clone or download this repository.
-2. Open your terminal in the project directory.
-
-No need to manually create virtual environments—`uv run` handles everything automatically!
+- **Progress Resuming**: If textbook processing is canceled or fails mid-way, running the command again will automatically resume from the last successfully processed section, saving time and API costs.
 
 ---
 
 ## Usage
 
-### 1. Using OpenAI (Recommended for Quality)
+### 1. Using OpenAI
 
 If you have an OpenAI account and want to use models like `gpt-4o-mini`:
 
@@ -40,7 +29,7 @@ uv run python src/main.py /path/to/your/textbook.pdf \
     --density "medium"
 ```
 
-### 2. Using Local LLMs via Ollama (Free and Private)
+### 2. Using Local LLMs via Ollama
 
 If you want to keep your textbook completely private and have [Ollama](https://ollama.com/) installed:
 
